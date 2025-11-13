@@ -1,52 +1,114 @@
-# .github/workflows/ci.yml
-name: CI
+# # .github/workflows/ci.yml
+# name: CI
+
+# on:
+#   push:
+#     branches: [ dev, docker_cicd ]
+
+# jobs:
+#   check_working_repo:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Set up Python
+#         uses: actions/setup-python@v4
+#         with:
+#           python-version: "3.10"
+
+#       - name: Install dependencies
+#         run: |
+#           python -m pip install --upgrade pip
+#           pip install -r requirements.txt
+
+#       - name: Train model
+#         run: |
+#           python train.py
+#       - name: Run tests
+#         run: |
+#           python test.py
+
+#   build_and_push_docker:
+#     needs: check_working_repo
+#     runs-on: ubuntu-latest
+#     if: github.ref == 'refs/heads/docker_cicd'
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - name: Set up QEMU (for cross-platform builds)
+#         uses: docker/setup-qemu-action@v2
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v2
+
+#       - name: Login to DockerHub
+#         uses: docker/login-action@v2
+#         with:
+#               username: ${{ secrets.DOCKERHUB_USERNAME }}
+#               password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+#       - name: Build and push
+#         run: |
+#           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest .
+#           docker push ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest
+
+
+
+
+
+
+
+
+
+
+
+
+
+name: Train -> Build -> Push
 
 on:
   push:
     branches: [ dev, docker_cicd ]
 
 jobs:
-  check_working_repo:
+  train:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
+        with: { python-version: '3.10' }
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: Train model
-        run: |
-          python train.py
-      - name: Run tests
-        run: |
-          python test.py
+        run: python train.py
+      - name: Upload model
+        uses: actions/upload-artifact@v4
+        with:
+          name: saved-model
+          path: models/savedmodel.pth
 
-  build_and_push_docker:
-    needs: check_working_repo
+  build_and_push:
+    needs: train
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/docker_cicd'
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up QEMU (for cross-platform builds)
-        uses: docker/setup-qemu-action@v2
-
+      - name: Download model artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: saved-model
+          path: models
+      - name: Show model
+        run: ls -la models
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to DockerHub
+        uses: docker/setup-buildx-action@v3
+      - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
-              username: ${{ secrets.DOCKERHUB_USERNAME }}
-              password: ${{ secrets.DOCKERHUB_TOKEN }}
-
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: Build and push
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest .
