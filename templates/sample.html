@@ -1,0 +1,48 @@
+<!-- templates/samples.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sample Test Images</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .sample-img {
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+  <a href="/" class="btn btn-secondary mb-3">&larr; Back to Home</a>
+
+  <h3 class="mb-3">Random Test Images (from test_data.npz)</h3>
+  <p class="text-muted">These images come directly from your saved test split. Click any image to auto-predict it in the main UI.</p>
+
+  <div class="row g-4">
+    {% for sample in samples %}
+    <div class="col-4 col-md-3 col-lg-2">
+      <div class="card shadow-sm">
+        <img src="data:image/png;base64,{{ sample.img_base64 }}" class="sample-img card-img-top">
+
+        <div class="card-body p-2 text-center">
+          <small class="text-muted">True label: {{ sample.true_label }}</small>
+        </div>
+
+        <!-- Form to send this image to predict -->
+        <form action="/" method="GET" class="text-center mb-2">
+          <input type="hidden" name="autofill" value="{{ sample.img_base64 }}">
+          <button class="btn btn-sm btn-primary">Predict</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+</body>
+</html>

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: olivetti
-        image: <DOCKERHUB_USERNAME>/olivetti:latest
+        image: arpittomar/olivetti:latest
         ports:
         - containerPort: 5000
         resources:
