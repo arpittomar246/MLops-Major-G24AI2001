@@ -27,7 +27,7 @@ spec:
         - name: FLASK_ENV
           value: "production"
         - name: MODEL_PATH
-          value: "/app/models/savedmodel.pth"
+          value: "/models/savedmodel.pth"
         livenessProbe:
           httpGet:
             path: /
