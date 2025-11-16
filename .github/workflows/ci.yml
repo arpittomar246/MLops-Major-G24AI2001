@@ -109,15 +109,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-<<<<<<< HEAD
       - name: Build and push
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest
-=======
-
-      - name: Build and push
-        run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/olivetti:latest
->>>>>>> 7e239d0f3439b24350b7ab0751173a49d4a84075
