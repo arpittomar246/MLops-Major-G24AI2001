@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: olivetti-deployment
+  labels:
+    app: olivetti
 spec:
   replicas: 3
   selector:
@@ -12,12 +14,39 @@ spec:
       labels:
         app: olivetti
     spec:
+      # If your Docker Hub repo is private, set imagePullSecrets with the secret name you create
+      # imagePullSecrets:
+      # - name: regcred
       containers:
       - name: olivetti
         image: arpittomar/olivetti:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
+        env:
+        - name: FLASK_ENV
+          value: "production"
+        - name: MODEL_PATH
+          value: "/models/savedmodel.pth"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
         resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
           limits:
             cpu: "500m"
             memory: "512Mi"
+      terminationGracePeriodSeconds: 30
