@@ -10,14 +10,13 @@ from sklearn.metrics import accuracy_score
 import base64
 import random
 
-# CONFIG
 MODEL_PATH = "models/savedmodel.pth"
-TESTDATA_PATH = "models/test_data.npz"  # optional, may be missing if not trained yet
+TESTDATA_PATH = "models/test_data.npz" 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "bmp", "gif"}
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 
-# Helper: load model and optionally test data
+
 def safe_load_model(path=MODEL_PATH):
     if not os.path.exists(path):
         return None
@@ -38,7 +37,7 @@ def load_test_metrics(testdata_path=TESTDATA_PATH, clf=None):
         n_classes = None
     return acc, n_classes
 
-# Preload model at startup (faster responses)
+
 MODEL = safe_load_model()
 MODEL_INFO = {}
 if MODEL is not None:
@@ -69,7 +68,7 @@ def preprocess_image_bytes(file_bytes):
 
 @app.route("/")
 def index():
-    # Render UI; pass model info so page can show it
+
     return render_template("index.html", model_info=MODEL_INFO)
 
 @app.route("/predict", methods=["POST"])
@@ -89,11 +88,11 @@ def predict():
 
     try:
         file_bytes = file.read()
-        X = preprocess_image_bytes(file_bytes)  # shape (1, 4096)
+        X = preprocess_image_bytes(file_bytes) 
         pred_label = int(MODEL.predict(X)[0])
         predicted_name = f"Person {pred_label}"
 
-        # Build top-k list (with probabilities if available)
+   
         topk = []
         if MODEL_INFO.get("has_proba", False):
             proba = MODEL.predict_proba(X)[0]
@@ -103,7 +102,7 @@ def predict():
         else:
             topk = [{"class": pred_label, "prob": None, "name": predicted_name}]
 
-        # Try to attach a representative image for the predicted class from test_data.npz
+
         rep_image_b64 = None
         true_label_of_sample = None
         if os.path.exists(TESTDATA_PATH):
@@ -111,7 +110,7 @@ def predict():
                 d = np.load(TESTDATA_PATH)
                 X_test = d["X_test"]
                 y_test = d["y_test"]
-                # find an index in the test set with this class (if available)
+    
                 idxs = np.where(y_test == pred_label)[0]
                 if len(idxs) > 0:
                     idx0 = int(idxs[0])
@@ -122,7 +121,7 @@ def predict():
                     rep_image_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
                     true_label_of_sample = int(y_test[idx0])
             except Exception:
-                # non-fatal; we still return prediction without image
+     
                 rep_image_b64 = None
 
         response = {
@@ -140,9 +139,7 @@ def predict():
     
 
 def load_sample_test_images(n_samples=12):
-    """Loads N random test samples from test_data.npz, returns list of dicts:
-       [{ 'img_base64': ..., 'true_label': int }, ... ]
-    """
+
     if not os.path.exists(TESTDATA_PATH):
         return []
 
@@ -150,16 +147,15 @@ def load_sample_test_images(n_samples=12):
     X_test = data["X_test"]
     y_test = data["y_test"]
 
-    # Pick random indices
+
     idxs = random.sample(range(len(X_test)), min(n_samples, len(X_test)))
 
     samples = []
     for idx in idxs:
-        arr = X_test[idx].reshape(64, 64) * 255.0      # undo normalization
+        arr = X_test[idx].reshape(64, 64) * 255.0    
         arr = arr.astype(np.uint8)
         img = Image.fromarray(arr, mode="L")
 
-        # convert to base64 so Flask can embed in <img>
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         img_bytes = buffer.getvalue()
@@ -181,12 +177,10 @@ def samples():
     test_samples = load_sample_test_images(n_samples=12)
     return render_template("samples.html", samples=test_samples)
 
-# optional: small route to serve favicon if requested
 @app.route("/favicon.ico")
 def favicon():
     return send_from_directory(os.path.join(app.root_path, "static"),
                                "favicon.ico", mimetype="image/vnd.microsoft.icon")
 
 if __name__ == "__main__":
-    # Development server
     app.run(host="0.0.0.0", port=5000, debug=True)
