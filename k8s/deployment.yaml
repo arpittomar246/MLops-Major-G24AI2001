@@ -14,9 +14,7 @@ spec:
       labels:
         app: olivetti
     spec:
-      # If your Docker Hub repo is private, set imagePullSecrets with the secret name you create
-      # imagePullSecrets:
-      # - name: regcred
+
       containers:
       - name: olivetti
         image: arpittomar/olivetti:latest
@@ -28,7 +26,7 @@ spec:
           value: "production"
         - name: MODEL_PATH
           value: "/models/savedmodel.pth"
-        livenessProbe:
+        livenessProbe:  
           httpGet:
             path: /
             port: 5000
